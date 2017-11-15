@@ -1,0 +1,4444 @@
+swagger: '2.0'
+info:
+  title: Yanport API
+  version: '1.0'
+  description: >
+    ## À propos
+
+    Voici quelques ressources qui vous aideront à explorer notre API, si vous
+    avez des problèmes ou des demandes, veuillez contacter le
+    [support](mailto:support@yanport.com).
+
+    ## REST API
+
+    Nos services webs utilisent le protocle **HTTPS** sur le port 443, tout
+    accès en HTTP sur le port 80 est bloqué par notre pare-feu. Les échanges de
+    données sont réalisés en **JSON**.
+
+    ## Authentification
+
+    Avant de commencer à explorer notre API, vous devez nous
+    [contacter](https://www.yanport.com/contact) afin d'obtenir un [JSON Web
+    Token](https://jwt.io) (**JWT**) qui vous permettra de vous identifier à
+    chaque requêtes.
+
+    ### JWT (header)
+
+    La méthode privilégiée pour s'authentifier est de passer à chaque requêtes
+    le token dans le header `Authorization: Bearer {{ JWT }}` en remplaçant `{{
+    JWT }}` par votre token.
+
+    ### JWT (query param)
+
+    Il est aussi possible de passer le token directement en query param de la
+    requête `https://api.yanport.com/?token={{ JWT }}`. (_privilégié le passage
+    par header en production._)
+
+    ## Pour démarrer
+
+    Lorsque vous disposez de votre token d'authentification, vous pouvez
+    commencer à explorer notre API grâce au boutton  `Try it out` sur chacun de
+    nos webs services.
+
+    Mais au préalable, vous devez vous authentifier en cliquant sur le boutton
+    `Authorize `, en remplissant l'input `api_key` avec `Bearer
+    {{ JWT }}`.
+
+
+    **Exemple** `Bearer eyUEkiLCJh...CHCUiBfD63oxoo=`
+
+    ## Limitation
+
+    Toutes les requêtes à notre API sont loggées, c'est pourquoi vous devez
+    respecter nos [CGU](https://dev.yanport.com/cgu) afin d'éviter tout usage
+    abusif de notre API.
+  contact:
+    email: dev@yanport.com
+host: api.yanport.com
+basePath: /
+schemes:
+  - https
+security:
+  - jwt: []
+securityDefinitions:
+  jwt:
+    type: apiKey
+    description: |
+      Json Web Token (https://jwt.io/)
+
+      Ne pas oublier d''ajouter **Bearer** devant votre token dans le champ **Value**
+
+    name: Authorization
+    in: header
+tags:
+  - name: annonces
+    description: Les annonces des portails
+  - name: biens
+    description: Les biens du marché
+  - name: biens-similaires
+    description: Les biens similaires
+  - name: encadrement-loyers
+    description: Encadrement des loyers
+  - name: organisations
+    description: Organisations
+  - name: mandataires
+    description: Réseaux de mandataires
+  - name: utilisateurs
+    description: Utilisateurs
+  - name: villes
+    description: Référentiel des villes
+  - name: etudes
+    description: Études de marché
+paths:
+  /ads:
+    get:
+      tags:
+        - annonces
+      summary: Rechercher des annonces
+      description: |
+        Recherche sur l'ensemble des annonces publiées par les portails selon certains critères comme la date de
+        publication, le prix, la surface... _(voir ci-dessous pour une liste exhaustive)_.
+
+        La recherche plein-texte est disponible sur le titre et la description via le query param `q` _(voir notre
+        [FAQ](https://yanporthelp.zendesk.com/hc/fr/articles/208456909-Comment-affiner-ma-recherche-avec-des-mots-cl%C3%A9s-)
+        concernant la syntaxe)_
+
+        Par défaut les résultats sont paginés, pour parcourir l'ensemble des annonces les paramètres `from` et `size`
+        doivent être renseignés. Le paramètre `from` définit le début du set de données et `size` le nombre d'éléments à
+        récupérer. Le nombre `total` d'éléments est renvoyé dans la réponse.
+
+        Concernant le tri le paramètre `sort` à pour syntaxe `field:asc|desc` en remplaçant `field` par le nom du champ
+        sur lequel appliqué le tri.
+
+        # Exemples
+          ## Les annonces en cours de publication sur Levallois-Perret entre 120 et 130m²
+            /ads?active=true&zipCodes=92300&surfaceMin=120&surfaceMax=130
+          ## Les annonces en cours de publication dans le 17ème arrondissement de Paris avec balcon
+            /ads?active=true&zipCodes=75017&q=balcon
+          ## Les dernières annonces de particulier publiées en Corse sur LeBonCoin et PAP
+            /ads?active=true&crawlSources=LE_BON_COIN&crawlSources=PAP&departments=2B&sort=property.marketing.publicationDate:asc
+
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+      responses:
+        '200':
+          description: 'Les annonces trouvées'
+          schema:
+            type: object
+            properties:
+              total:
+                type: integer
+              hits:
+                type: array
+                items:
+                  $ref: '#/definitions/Ad'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /ads/{id}:
+    get:
+      tags:
+        - annonces
+      summary: Récupérer une annonce (ID)
+      description: Récupérer une annonce par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'annonce
+          required: true
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: L'annonce demandée
+          schema:
+            $ref: '#/definitions/Ad'
+        '404':
+          $ref: '#/responses/ResourceNotFound'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /ads/ids:
+    get:
+      tags:
+        - annonces
+      summary: Récupérer des annonces (ID)
+      description: Récupérer des annonces par leurs identifiants
+      produces:
+        - application/json
+      parameters:
+        - name: ids
+          in: query
+          description: Les identifiants des annonces
+          required: true
+          type: array
+          collectionFormat: multi
+          items:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Les annonces demandées
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Ad'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /ads/urls:
+    get:
+      tags:
+        - annonces
+      summary: Récupérer une annonce (URL)
+      description: Récupérer une annonce par son url
+      produces:
+        - application/json
+      parameters:
+        - name: url
+          in: query
+          description: Url de l'annonce
+          required: true
+          type: string
+      responses:
+        '200':
+          description: L'annonce demandée
+          schema:
+            $ref: '#/definitions/Ad'
+        '404':
+          $ref: '#/responses/ResourceNotFound'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /cities:
+    get:
+      tags:
+        - villes
+      summary: Rechercher des villes
+      description: >-
+        Récupérer des villes selon différents critères
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/GeoSearchQuery.lat'
+        - $ref: '#/parameters/GeoSearchQuery.lng'
+        - $ref: '#/parameters/GeoSearchQuery.radius'
+      responses:
+        '200':
+          description: La liste des villes
+          schema:
+            type: object
+            properties:
+              total:
+                type: integer
+              hits:
+                type: array
+                items:
+                  $ref: '#/definitions/City'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /cities/ids:
+    get:
+      tags:
+        - villes
+      summary: Récupérer des villes (ID)
+      description: >-
+        Récupérer des villes par leur identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: ids
+          in: query
+          description: Liste d'identifiants
+          required: true
+          type: array
+          collectionFormat: multi
+          items:
+            type: integer
+      responses:
+        '200':
+          description: La liste des villes
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/City'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /cities/{id}:
+    get:
+      tags:
+        - villes
+      summary: Récupérer une ville (ID)
+      description: Récupérer une ville par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de la ville
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: La ville demandée
+          schema:
+            $ref: '#/definitions/City'
+        '404':
+          $ref: '#/responses/ResourceNotFound'
+        '500':
+          $ref: '#/responses/InternalServerError'
+#  '/organizations/{id}':
+#    get:
+#      tags:
+#        - organisations
+#      summary: Récupérer une organisation
+#      description: Récupérer une organisation par son identifiant
+#      produces:
+#        - application/json
+#      parameters:
+#        - name: id
+#          in: path
+#          description: L'identifiant de l'organisation
+#          required: true
+#          type: integer
+#      responses:
+#        '200':
+#          description: L'organisation demandée
+#          schema:
+#            $ref: '#/definitions/Organization'
+#        '404':
+#          $ref: '#/responses/ResourceNotFound'
+#        '500':
+#          $ref: '#/responses/InternalServerError'
+  /properties:
+    get:
+      tags:
+        - biens
+      summary: Rechercher des biens
+      description: >-
+        Rechercher les biens actifs ou expirés selon plusieurs critères (prix,
+        surface, ville, ...)
+
+
+        La recherche plein-texte est disponible sur le titre et la description via le query param `q` _(voir notre
+        [FAQ](https://yanporthelp.zendesk.com/hc/fr/articles/208456909-Comment-affiner-ma-recherche-avec-des-mots-cl%C3%A9s-)
+        concernant la syntaxe)_
+
+
+        Par défaut les résultats sont paginés, pour parcourir l'ensemble des biens les paramètres `from` et `size`
+        doivent être renseignés. Le paramètre `from` définit le début du set de données et `size` le nombre d'éléments à
+        récupérer. Le nombre `total` d'éléments est renvoyé dans la réponse.
+
+
+        Concernant le tri le paramètre `sort` à pour syntaxe `field:asc|desc` en remplaçant `field` par le nom du champ
+        sur lequel appliqué le tri.
+
+        # Exemples
+          ## Les biens en cours de publication sur Levallois-Perret entre 120 et 130m²
+            /properties?active=true&published=true&zipCodes=92300&surfaceMin=120&surfaceMax=130
+          ## Les biens en cours de publication dans le 17ème arrondissement de Paris avec balcon
+            /properties?active=true&published=true&zipCodes=75017&q=balcon
+          ## Les dernièrs biens de particulier publiés en Corse sur LeBonCoin et PAP
+            /properties?active=true&published=true&crawlSources=LE_BON_COIN&crawlSources=PAP&departments=2B&sort=marketing.publicationStartDate:asc
+
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: La liste des biens
+          schema:
+            type: object
+            properties:
+              total:
+                type: integer
+              hits:
+                type: array
+                items:
+                  $ref: '#/definitions/Property'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/{id}:
+    get:
+      tags:
+        - biens
+      summary: Récupérer un bien (ID)
+      description: >-
+        Récupérer un bien par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Le bien
+          schema:
+            $ref: '#/definitions/Property'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/ids:
+    get:
+      tags:
+        - biens
+      summary: Récupérer des biens (ID)
+      description: >-
+        Récupérer des biens par leur identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          type: array
+          collectionFormat: multi
+          items:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Le bien
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Property'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/count:
+    get:
+      tags:
+        - biens
+      summary: Nombre de biens
+      description: >-
+        Compte le nombre de biens par rapport à certains critères de recherches. (prix, surface, ville, ...)
+
+        # Exemples
+          ## Nombre de biens en cours de publication sur Levallois-Perret entre 120 et 130m²
+            /properties/count?active=true&published=true&zipCodes=92300&surfaceMin=120&surfaceMax=130
+
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Le nombre de biens
+          schema:
+            $ref: '#/definitions/CountResponse'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/count/group-by-{groupBy}:
+    get:
+      tags:
+        - biens
+      summary: Nombre de biens
+      description: >-
+        Retourne le nombre de biens regroupés selon 1 critère.
+
+        # Exemples
+          ## Nombre de biens regroupés par portails en cours de publication sur Levallois-Perret
+            /properties/count/group-by-CRAWL_SOURCES?active=true&published=true&zipCodes=92300
+
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyGroupByCountQuery.groupBy'
+        - $ref: '#/parameters/PropertyGroupByCountQuery.termsSize'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Le nombre de biens
+          schema:
+            $ref: '#/definitions/CountResponse'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/count/group-by-{groupBy}-and-{subGroupBy}:
+    get:
+      tags:
+        - biens
+      summary: Nombre de biens
+      description: >-
+        Retourne le nombre de biens regroupés selon 1 critère et 1 sous-critère.
+
+        # Exemples
+          ## Nombre de biens regroupés par portails et par type de vendeur en cours de publication sur Levallois-Perret
+            /properties/count/group-by-CRAWL_SOURCES-and-DEALER_TYPE?active=true&published=true&zipCodes=92300
+
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyGroupByCountQuery.groupBy'
+        - $ref: '#/parameters/PropertySubGroupByCountQuery.subGroupBy'
+        - $ref: '#/parameters/PropertyGroupByCountQuery.termsSize'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Le nombre de biens
+          schema:
+            $ref: '#/definitions/CountResponse'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/distribution:
+    get:
+      tags:
+        - biens
+      summary: Disitribution des biens
+      description: >-
+        Permet de construire un graphique de distribution des biens selon plusieurs critères.
+
+        # Exemples
+          ## Distribution des durées de publication des biens en vente entre 2016 et 2017 à Levallois-Perret
+            /properties/distribution?field=DURATION_DAYS&intervalField=DURATION_DAYS&marketingTypes=SALE&active=false&published=true&zipCodes=92300&publicationDateMin=2016-01-01T00%3A00%3A00.00&publicationDateMax=2017-01-01T00%3A00%3A00.00
+
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyHistogramQuery.field'
+        - $ref: '#/parameters/percentiles'
+        - $ref: '#/parameters/PropertyHistogramQuery.intervalField'
+        - $ref: '#/parameters/PropertyHistogramQuery.interval'
+        - $ref: '#/parameters/PropertyHistogramQuery.extendedBoundMin'
+        - $ref: '#/parameters/PropertyHistogramQuery.extendedBoundMax'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Une liste de points
+          schema:
+            $ref: '#/definitions/Histogram'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/evolution:
+    get:
+      tags:
+        - biens
+      summary: Evolution des biens dans le temps
+      description: >-
+        Permet de constuire une courbe d'évolution du nombre de biens selon plusieurs critères.
+
+        # Exemples
+          ##Evolution des prix des biens en vente entre 2016 et 2017 à Levallois-Perret
+            /properties/evolution?field=PRICE&intervalField=DELETE_DATE&interval=1&intervalUnit=MONTHS&marketingTypes=SALE&active=false&published=true&zipCodes=92300&publicationDateMin=2016-01-01T00:00:00.00&publicationDateMax=2017-01-01T00:00:00.00
+
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyDateHistogramQuery.field'
+        - $ref: '#/parameters/percentiles'
+        - $ref: '#/parameters/PropertyDateHistogramQuery.intervalField'
+        - $ref: '#/parameters/PropertyHistogramQuery.interval'
+        - $ref: '#/parameters/PropertyDateHistogramQuery.intervalUnit'
+        - $ref: '#/parameters/PropertyHistogramQuery.extendedBoundMin'
+        - $ref: '#/parameters/PropertyHistogramQuery.extendedBoundMax'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Une liste de points
+          schema:
+            $ref: '#/definitions/DateHistogram'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/stock-evolution:
+    get:
+      tags:
+        - biens
+      summary: L'évolution du stock de biens
+      description: >-
+        Permet de constuire une courbe représentant l'évolution du stock de biens selon plusieurs critères.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyDateHistogramQuery.field'
+        - $ref: '#/parameters/percentiles'
+        - $ref: '#/parameters/PropertyDateHistogramQuery.intervalField'
+        - $ref: '#/parameters/PropertyHistogramQuery.interval'
+        - $ref: '#/parameters/PropertyDateHistogramQuery.intervalUnit'
+        - $ref: '#/parameters/PropertyHistogramQuery.extendedBoundMin'
+        - $ref: '#/parameters/PropertyHistogramQuery.extendedBoundMax'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Une liste de points
+          schema:
+            $ref: '#/definitions/StockEvolution'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/percentiles:
+    get:
+      tags:
+        - biens
+      summary: Indicateurs de références
+      description: >-
+        Permet de récupérer les indicateurs de références sur les biens selon plusieurs critères.
+
+        # Exemples
+          ## PrixM2 median des biens en cours de publication en vente à Levallois-Perret
+            /properties/percentiles?field=PRICE&percentiles=50&marketingTypes=SALE&active=true&zipCodes=92300
+
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyPercentileQuery.field'
+        - $ref: '#/parameters/percentiles'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Les percentiles
+          schema:
+            $ref: '#/definitions/Percentiles'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/percentiles/group-by-{groupBy}:
+    get:
+      tags:
+        - biens
+      summary: Indicateurs de réferences
+      description: >-
+        Permet de récupérer les indicateurs de références regroupé selon 1 critère.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyGroupByPercentileQuery.groupBy'
+        - $ref: '#/parameters/PropertyGroupByCountQuery.termsSize'
+        - $ref: '#/parameters/PropertyPercentileQuery.field'
+        - $ref: '#/parameters/percentiles'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Les percentiles regoupés par le champ demandé
+          schema:
+            type: object
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/stats:
+    get:
+      tags:
+        - biens
+      summary: Statistiques sur les biens
+      description: >-
+        Permet de récupérer les statistiques des biens selon plusieurs critères.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyStatsQuery.field'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Les statistiques
+          schema:
+            $ref: '#/definitions/Stats'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/stats/group-by-{groupBy}:
+    get:
+      tags:
+        - biens
+      summary: Statistiques sur les biens
+      description: >-
+        Permet de récupérer les statistiques basiques des biens regroupé selon 1 critère.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyGroupByStatsQuery.groupBy'
+        - $ref: '#/parameters/PropertyGroupByCountQuery.termsSize'
+        - $ref: '#/parameters/PropertyStatsQuery.field'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Les statistiques regroupés par le champ demandé
+          schema:
+            type: object
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /properties/stats/group-by-{groupBy}-and-{subGroupBy}:
+    get:
+      tags:
+        - biens
+      summary: Statistiques sur les biens
+      description: >-
+        Permet de récupérer les statistiques basiques des biens regroupé selon 1 critère et 1 sous-critère.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/PropertyStatsQuery.field'
+        - $ref: '#/parameters/PropertyGroupByStatsQuery.groupBy'
+        - $ref: '#/parameters/PropertySubGroupByStatsQuery.subGroupBy'
+        - $ref: '#/parameters/PropertyGroupByCountQuery.termsSize'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/crawlSources'
+        - $ref: '#/parameters/active'
+        - $ref: '#/parameters/published'
+        - $ref: '#/parameters/dealerTypes'
+        - $ref: '#/parameters/dealerNames'
+        - $ref: '#/parameters/exclusiveMandate'
+        - $ref: '#/parameters/dealerIds'
+        - $ref: '#/parameters/excludedDealerIds'
+        - $ref: '#/parameters/propertyIds'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/roomCounts'
+        - $ref: '#/parameters/departments'
+        - $ref: '#/parameters/zipCodes'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/publicationDateMax'
+        - $ref: '#/parameters/adPublicationDateMin'
+        - $ref: '#/parameters/adPublicationDateMax'
+        - $ref: '#/parameters/lastPriceDecreaseDateMin'
+        - $ref: '#/parameters/lastPriceDecreaseDateMax'
+        - $ref: '#/parameters/deleteDateMin'
+        - $ref: '#/parameters/deleteDateMax'
+        - $ref: '#/parameters/durationDaysMin'
+        - $ref: '#/parameters/durationDaysMax'
+        - $ref: '#/parameters/surfaceMin'
+        - $ref: '#/parameters/surfaceMax'
+        - $ref: '#/parameters/priceMin'
+        - $ref: '#/parameters/priceMax'
+        - $ref: '#/parameters/priceM2Min'
+        - $ref: '#/parameters/priceM2Max'
+        - $ref: '#/parameters/priceHCMin'
+        - $ref: '#/parameters/priceHCMax'
+        - $ref: '#/parameters/priceM2HCMin'
+        - $ref: '#/parameters/priceM2HCMax'
+        - $ref: '#/parameters/priceCCMin'
+        - $ref: '#/parameters/priceCCMax'
+        - $ref: '#/parameters/feesMin'
+        - $ref: '#/parameters/feesMax'
+        - $ref: '#/parameters/depositMin'
+        - $ref: '#/parameters/depositMax'
+        - $ref: '#/parameters/furnished'
+        - $ref: '#/parameters/newBuild'
+        - $ref: '#/parameters/missingFields'
+        - $ref: '#/parameters/existingFields'
+        - $ref: '#/parameters/excludedIds'
+        - $ref: '#/parameters/externalIds'
+        - $ref: '#/parameters/organizationIds'
+      responses:
+        '200':
+          description: Les statistiques regoupés par le champ et sous champ demandé
+          schema:
+            type: object
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /rent-control/check:
+    post:
+      tags:
+        - encadrement-loyers
+      summary: Encadrement des loyers
+      description: >-
+        Permet de controller vis-à-vis de la législation si un loyer est hors/dans l'encadrement des loyers.
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Requête d'encadrement d'un loyer
+          required: true
+          schema:
+            type: object
+            properties:
+              rawAddress:
+                type: string
+              surface:
+                type: number
+                format: double
+              roomCount:
+                type: integer
+              price:
+                type: number
+                format: double
+              furnished:
+                type: boolean
+              constructionPeriod:
+                $ref: '#/definitions/Range'
+            required:
+              - surface
+              - roomCount
+              - price
+              - rawAddress
+      responses:
+        '200':
+          description: Le status vis-à-vis de l'encadrement
+          schema:
+            $ref: '#/definitions/RentControlResult'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /similar-properties:
+    get:
+      tags:
+        - biens-similaires
+      summary: Récuperer des biens similaires
+      description: >-
+        Retourne les biens similaires correspondants aux critères demandés.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/minDocCount'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/price'
+        - $ref: '#/parameters/surface'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/SimilarPropertyQuery.active'
+        - $ref: '#/parameters/SimilarPropertyQuery.roomCount'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+      responses:
+        '200':
+          description: Liste des biens similaires trouvés
+          schema:
+            type: object
+            properties:
+              searchResponse:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  hits:
+                    type: array
+                    items:
+                      $ref: '#/definitions/Property'
+              searchQuery:
+                $ref: '#/definitions/PropertySearchQuery'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /similar-properties/query:
+    get:
+      tags:
+        - biens-similaires
+      summary: Paramètres optimaux
+      description: >-
+        Permet de récupérer les paramètres de requêtes optimaux pour avoir au minimum X biens similaires.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/minDocCount'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/price'
+        - $ref: '#/parameters/surface'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/SimilarPropertyQuery.active'
+        - $ref: '#/parameters/SimilarPropertyQuery.roomCount'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+      responses:
+        '200':
+          description: Les paramètres de la requêtes
+          schema:
+            $ref: '#/definitions/PropertySearchQuery'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /similar-properties/percentiles:
+    get:
+      tags:
+        - biens-similaires
+      summary: Indicateurs de références
+      description: >-
+        Permet de récupérer les indicateurs de références des biens similaires
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/minDocCount'
+        - $ref: '#/parameters/cityIds'
+        - $ref: '#/parameters/marketingTypes'
+        - $ref: '#/parameters/propertyTypes'
+        - $ref: '#/parameters/price'
+        - $ref: '#/parameters/surface'
+        - $ref: '#/parameters/publicationDateMin'
+        - $ref: '#/parameters/SimilarPropertyQuery.active'
+        - $ref: '#/parameters/SimilarPropertyQuery.roomCount'
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+        - $ref: '#/parameters/SimilarPropertyPercentileQuery.field'
+        - $ref: '#/parameters/percentiles'
+      responses:
+        '200':
+          description: Les percentiles
+          schema:
+            $ref: '#/definitions/Percentiles'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /adbox-events/count/group-by-{groupBy}:
+    get:
+      tags:
+        - evenements-adbox
+      summary: Nombre de biens
+      description: >-
+        Retourne le nombre de biens regroupés selon 1 critère
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+        - $ref: '#/parameters/AdboxEventSearchQuery.userIds'
+        - $ref: '#/parameters/AdboxEventSearchQuery.status'
+        - $ref: '#/parameters/AdboxEventSearchQuery.eventTypes'
+        - $ref: '#/parameters/AdboxEventSearchQuery.tags'
+        - $ref: '#/parameters/AdboxEventSearchQuery.propertyIds'
+        - $ref: '#/parameters/AdboxEventSearchQuery.eventTimeMin'
+        - $ref: '#/parameters/AdboxEventSearchQuery.eventTimeMax'
+        - $ref: '#/parameters/AdboxEventGroupByCountQuery.groupBy'
+        - $ref: '#/parameters/AdboxEventGroupByCountQuery.termsSize'
+      responses:
+        '200':
+          description: Le nombre de biens
+          schema:
+            $ref: '#/definitions/CountResponse'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /adbox-events/count/group-by-{groupBy}-and-{subGroupBy}:
+    get:
+      tags:
+        - evenements-adbox
+      summary: Nombre de biens
+      description: >-
+        Retourne le nombre de biens regroupés selon 1 critère et 1 sous-critère.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+        - $ref: '#/parameters/AdboxEventSearchQuery.userIds'
+        - $ref: '#/parameters/AdboxEventSearchQuery.status'
+        - $ref: '#/parameters/AdboxEventSearchQuery.eventTypes'
+        - $ref: '#/parameters/AdboxEventSearchQuery.tags'
+        - $ref: '#/parameters/AdboxEventSearchQuery.propertyIds'
+        - $ref: '#/parameters/AdboxEventSearchQuery.eventTimeMin'
+        - $ref: '#/parameters/AdboxEventSearchQuery.eventTimeMax'
+        - $ref: '#/parameters/AdboxEventGroupByCountQuery.groupBy'
+        - $ref: '#/parameters/AdboxEventGroupByCountQuery.termsSize'
+        - $ref: '#/parameters/AdboxEventSubGroupByCountQuery.subGroupBy'
+      responses:
+        '200':
+          description: Le nombre de biens
+          schema:
+            $ref: '#/definitions/CountResponse'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /users:
+    post:
+      tags:
+        - utilisateurs
+      summary: Créer un utilisateur
+      description: >-
+        Retourne l'utilisateur créé
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Formulaire pour la création d'un utilisateur
+          schema:
+            type: object
+            properties:
+              user:
+                $ref: '#/definitions/User'
+              password:
+                type: string
+              confirmPassword:
+                type: string
+      responses:
+        '200':
+          description: L'utilisateur créé
+          schema:
+            $ref: '#/definitions/User'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+    get:
+      tags:
+        - utilisateurs
+      summary: Rechercher des utilisateurs
+      description: >-
+        Rechercher des utilisateurs
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+        - $ref: '#/parameters/q'
+        - name: username
+          in: query
+          description: Nom de l'utilisateur
+          type: string
+        - name: email
+          in: query
+          description: Email de l'utilisateur
+          type: string
+        - name: externalId
+          in: query
+          description: TODO
+          type: string
+        - name: organizationId
+          in: query
+          description: Identifiant de l'organisation
+          type: integer
+          format: int64
+        - name: mandataryNetworkIds
+          in: query
+          description: Identifiants de réseaux mandataires
+          type: array
+          items:
+            type: integer
+            format: int64
+        - name: agencyIds
+          in: query
+          description: Identifiants d'agences
+          type: array
+          items:
+            type: integer
+            format: int64
+        - name: active
+          in: query
+          description: Filter les utilisateurs actifs ou non
+          type: boolean
+        - name: firstConnection
+          in: query
+          description: Filtrer les utilisateurs s'étant deja connectés à l'application ou non
+          type: boolean
+        - name: admin
+          in: query
+          description: Filter les utilisateurs administrateurs ou non
+          type: boolean
+      responses:
+        '200':
+          description: Les utilisateurs trouvés
+          schema:
+            type: object
+            properties:
+              total:
+                type: integer
+              hits:
+                type: array
+                items:
+                  $ref: '#/definitions/User'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /users/{id}:
+    get:
+      tags:
+        - utilisateurs
+      summary: Recupérer un utilisateur par id
+      description: >-
+        Retourne l'utilisateur correspondant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'utilisateur
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: L'utilisateur créé
+          schema:
+            $ref: '#/definitions/User'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+    put:
+      tags:
+        - utilisateurs
+      summary: Mettre à jour un utilisateur
+      description: >-
+        Met à jour un utilisateur et retourne celui-ci
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'utilisateur
+          required: true
+          type: integer
+          format: int64
+        - name: user
+          in: body
+          required: true
+          description: Données de l'utilisateur à mettre à jour
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: L'utilisateur mis à jour
+          schema:
+            $ref: '#/definitions/User'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+    delete:
+      tags:
+        - utilisateurs
+      summary: Supprimer un utilisateur
+      description: >-
+        Supprime l'utilisateur correspondant à l'id donné
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'utilisateur
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          $ref: '#/responses/NoContent'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /users/{id}/team:
+    get:
+      tags:
+        - utilisateurs
+      summary: Recupérer les utilisateurs (agents) faisant équipe avec l'utilsateur correspondant à l'id donné
+      description: >-
+        Retourne les utilisateurs correspondants
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'utilisateur
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: L'utilisateur créé
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/User'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /users/{id}/avatars:
+    post:
+      tags:
+        - utilisateurs
+      summary: Mettre à jour l'avatar d'un utilisateur
+      description: >-
+        Met à jour l'avatar d'un utilisateur et retourne son url
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'utilisateur
+          required: true
+          type: integer
+          format: int64
+        - $ref: '#/parameters/HttpBlob.location'
+        - $ref: '#/parameters/HttpBlob.fileName'
+        - $ref: '#/parameters/HttpBlob.mediaType'
+        - $ref: '#/parameters/HttpBlob.content'
+        - $ref: '#/parameters/HttpBlob.md5'
+        - $ref: '#/parameters/HttpBlob.base64'
+      responses:
+        '200':
+          description: L'Url de l'avatar
+          schema:
+            type: string
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /users/{id}/deactivate:
+    get:
+      tags:
+        - utilisateurs
+      summary: Désactiver un utilisateur
+      description: >-
+        Désactiver un utilisateur correspondant à l'id donné
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'utilisateur
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          $ref: '#/responses/NoContent'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /users/{id}/activate:
+    get:
+      tags:
+        - utilisateurs
+      summary: Activer un utilisateur
+      description: >-
+        Activer un utilisateur correspondant à l'id donné
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'utilisateur
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          $ref: '#/responses/NoContent'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /agencies/{id}:
+    get:
+      tags:
+        - agences
+      summary: Récupérer une agence
+      description: >-
+        Récupérer une agence par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'agence
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: L'agence correspondante
+          schema:
+            $ref: '#/definitions/Agency'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /agencies:
+    get:
+      tags:
+        - agences
+      summary: Rechercher des agences
+      description: >-
+        Rechercher des agences selon plusieurs critères
+
+        # Exemples
+          ## Les agences situées à Levallois-Perret et qui ont au moins 10 biens en vente et en location
+            /agencies?cityIds=54178039&salePropertyCountMin=10&rentPropertyCountMin=10
+          ## Les agences situées dans un rayon de 100m autour de Levallois-Perret
+            /agencies?lat=48.8932&lon=2.2879&radius=100m
+          ## Les agences Nexity
+            /agencies?siren=487530099
+      produces:
+       - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/AgencySearchQuery.externalId'
+        - $ref: '#/parameters/AgencySearchQuery.organizationId'
+        - $ref: '#/parameters/AgencySearchQuery.siren'
+        - $ref: '#/parameters/AgencySearchQuery.siret'
+        - $ref: '#/parameters/AgencySearchQuery.cityIds'
+        - $ref: '#/parameters/GeoSearchQuery.lat'
+        - $ref: '#/parameters/GeoSearchQuery.lng'
+        - $ref: '#/parameters/GeoSearchQuery.radius'
+        - $ref: '#/parameters/AgencySearchQuery.salePropertyCountMin'
+        - $ref: '#/parameters/AgencySearchQuery.salePropertyCountMax'
+        - $ref: '#/parameters/AgencySearchQuery.rentPropertyCountMin'
+        - $ref: '#/parameters/AgencySearchQuery.rentPropertyCountMax'
+        - $ref: '#/parameters/AgencySearchQuery.active'
+      responses:
+        '200':
+          description: Les agences trouvées
+          schema:
+            type: object
+            properties:
+              total:
+                type: integer
+              hits:
+                type: array
+                items:
+                  $ref: '#/definitions/Agency'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /mandatary-networks/{id}:
+    get:
+      tags:
+        - mandataires
+      summary: Récupérer un réseau mandataire
+      description: >-
+        Récupérer un réseau mandataire par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant du réseau de mandataire
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Le réseau mandataire correspondant
+          schema:
+            $ref: '#/definitions/MandataryNetwork'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /mandatary-networks:
+    get:
+      tags:
+        - mandataires
+      summary: Rechercher des réseaux mandataires
+      description: >-
+        Rechercher des réseaux mandataires selon plusieurs critères
+
+        # Exemples
+          ## Rechercher le réseau Efficity
+            /mandatary-networks?q=efficity'
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+        - $ref: '#/parameters/q'
+        - $ref: '#/parameters/MandataryNetworkSearchQuery.siren'
+      responses:
+        '200':
+          description: Les réseaux mandataires trouvés
+          schema:
+            type: object
+            properties:
+              total:
+                type: integer
+              hits:
+                type: array
+                items:
+                  $ref: '#/definitions/MandataryNetwork'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /studies/{id}:
+    get:
+      tags:
+        - etudes
+      summary: Récupérer une étude
+      description: >-
+        Récupérer une étude par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'étude
+          required: true
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: L'étude correspondante
+          schema:
+            $ref: '#/definitions/Study'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+    put:
+      tags:
+        - etudes
+      summary: Mettre à jour une étude
+      description: >-
+        Mettre à jour une étude par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'étude
+          required: true
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: L'étude mise à jour
+          schema:
+            $ref: '#/definitions/Study'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+    delete:
+      tags:
+        - etudes
+      summary: Supprimer une étude
+      description: >-
+        Supprimer une étude par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'étude
+          required: true
+          type: string
+          format: uuid
+      responses:
+        '200':
+          $ref: '#/responses/NoContent'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /studies:
+    get:
+      tags:
+        - etudes
+      summary: Rechercher des études
+      description: >-
+        Rechercher des études selon plusieurs critères
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+        - $ref: '#/parameters/StudySearchQuery.userIds'
+        - $ref: '#/parameters/StudySearchQuery.externalUserIds'
+        - $ref: '#/parameters/StudySearchQuery.agencyIds'
+        - $ref: '#/parameters/StudySearchQuery.externalAgencyIds'
+        - $ref: '#/parameters/StudySearchQuery.organizationIds'
+        - $ref: '#/parameters/StudySearchQuery.marketingTypes'
+        - $ref: '#/parameters/StudySearchQuery.propertyExternalIds'
+        - $ref: '#/parameters/StudySearchQuery.creationDateMin'
+        - $ref: '#/parameters/StudySearchQuery.creationDateMax'
+      responses:
+        '200':
+          description: Les études trouvées
+          schema:
+            type: object
+            properties:
+              total:
+                type: integer
+              hits:
+                type: array
+                items:
+                  $ref: '#/definitions/Study'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+    post:
+      tags:
+        - etudes
+      summary: Créer une étude
+      description: >-
+        Retourne l'étude créé
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: Formulaire pour la création d'une étude
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              userId:
+                type: integer
+                format: int64
+              externalUserId:
+                type: string
+              agencyId:
+                type: integer
+                format: int64
+              externalAgencyId:
+                type: string
+              organizationId:
+                type: integer
+                format: int64
+              name:
+                type: string
+              customer:
+                $ref: '#/definitions/Customer'
+              property:
+                $ref: '#/definitions/Property'
+              sections:
+                $ref: '#/definitions/Sections'
+              creationDate:
+                type: string
+                format: 'date-time'
+              updateDate:
+                type: string
+                format: 'date-time'
+      responses:
+        '200':
+          description: L'étude créé
+          schema:
+            $ref: '#/definitions/Study'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /studies/count:
+    get:
+      tags:
+        - etudes
+      summary: Nombre d'études
+      description: >-
+        Compte le nombre d'études par rapport à certains critères de recherches.
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/SearchQueryParam.from'
+        - $ref: '#/parameters/SearchQueryParam.size'
+        - $ref: '#/parameters/SearchQueryParam.sort'
+        - $ref: '#/parameters/SearchQueryParam.includes'
+        - $ref: '#/parameters/SearchQueryParam.excludes'
+        - $ref: '#/parameters/StudySearchQuery.userIds'
+        - $ref: '#/parameters/StudySearchQuery.externalUserIds'
+        - $ref: '#/parameters/StudySearchQuery.agencyIds'
+        - $ref: '#/parameters/StudySearchQuery.externalAgencyIds'
+        - $ref: '#/parameters/StudySearchQuery.organizationIds'
+        - $ref: '#/parameters/StudySearchQuery.marketingTypes'
+        - $ref: '#/parameters/StudySearchQuery.propertyExternalIds'
+        - $ref: '#/parameters/StudySearchQuery.creationDateMin'
+        - $ref: '#/parameters/StudySearchQuery.creationDateMax'
+      responses:
+        '200':
+          description: Le nombre de biens
+          schema:
+            $ref: '#/definitions/CountResponse'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+  /studies/{id}/duplicate:
+    get:
+      tags:
+        - etudes
+      summary: Dupliquer une étude
+      description: >-
+        Dupliquer une étude par son identifiant
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: L'identifiant de l'étude
+          required: true
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: L'étude dupliquée
+          schema:
+            $ref: '#/definitions/Study'
+        '400':
+          $ref: '#/responses/BadRequest'
+        '500':
+          $ref: '#/responses/InternalServerError'
+responses:
+  BadRequest:
+    description: Paramètres de la requête invalides
+    schema:
+      $ref: '#/definitions/DefaultResponse'
+  ResourceNotFound:
+    description: La resource demandée n'existe pas
+    schema:
+      $ref: '#/definitions/DefaultResponse'
+  InternalServerError:
+    description: Une erreur coté serveur s'est produite
+    schema:
+      $ref: '#/definitions/DefaultResponse'
+  NoContent:
+    description: Réponse vide
+    schema:
+      $ref: '#/definitions/DefaultResponse'
+definitions:
+  DefaultResponse:
+    type: object
+    properties:
+      msg:
+        type: string
+      status:
+        type: integer
+  RentControlResult:
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/RentControlStatus'
+      address:
+        $ref: '#/definitions/Address'
+      constructionPeriod:
+        $ref: '#/definitions/Range'
+      irishQuarter:
+        $ref: '#/definitions/IrisQuarter'
+      zones:
+        $ref: '#/definitions/RentControlZone'
+      buildings:
+        $ref: '#/definitions/Building'
+  CountResponse:
+    type: object
+    properties:
+      count:
+        type: integer
+        format: int64
+  Property:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      externalId:
+        type: string
+      type:
+        type: string
+        enum:
+          - HOUSE
+          - APARTMENT
+          - PREMISES
+          - LAND
+          - BUILDING
+          - PARKING
+      subType:
+        type: string
+        enum:
+          - CHALET
+          - MANSION
+          - CASTLE
+          - HOMESTEAD
+          - LOFT
+          - DUPLEX
+          - TRIPLEX
+          - SHOP
+          - OFFICE
+      features:
+        $ref: '#/definitions/Property.Features'
+      marketing:
+        $ref: '#/definitions/Property.Marketing'
+      address:
+        $ref: '#/definitions/Address'
+      ads:
+        type: array
+        maxItems: 100
+        items:
+          $ref: '#/definitions/AdRef'
+  Property.Features:
+    type: object
+    properties:
+      descriptive:
+        type: object
+        properties:
+          description:
+            type: string
+            maxLength: 10000
+          pros:
+            type: array
+            maxItems: 10
+            items:
+              type: string
+              maxLength: 1000
+          cons:
+            type: array
+            maxItems: 10
+            items:
+              type: string
+              maxLength: 1000
+          comments:
+            type: string
+            maxLength: 2000
+          generalState:
+            $ref: '#/definitions/State'
+          services:
+            type: object
+            properties:
+              CARETAKER:
+                type: boolean
+              CLEANING:
+                type: boolean
+
+          equipments:
+            type: object
+            properties:
+              FURNITURE:
+                type: boolean
+              FIREPLACE:
+                type: boolean
+              AIR_CONDITIONING:
+                type: boolean
+              ADSL:
+                type: boolean
+              CABLE:
+                type: boolean
+              FIBER:
+                type: boolean
+              ELEVATOR:
+                type: boolean
+              DIGICODE:
+                type: boolean
+              INTERCOM:
+                type: boolean
+              VIDEOPHONE:
+                type: boolean
+              BIKE_AREA:
+                type: boolean
+              TWO_WHEEL_PARK:
+                type: boolean
+              DISABLED_ACCESS:
+                type: boolean
+      visual:
+        type: object
+        properties:
+          images:
+            type: array
+            maxItems: 40
+            items:
+              type: string
+          orientations:
+            type: array
+            items:
+              type: string
+              enum:
+                - NORTH
+                - EAST
+                - SOUTH
+                - WEST
+          views:
+            type: array
+            items:
+              type: string
+              enum:
+                - SEE
+                - MOUNTAIN
+                - RIVER
+                - LAKE
+      geometry:
+        type: object
+        properties:
+          surface:
+            type: number
+            format: double
+            minimum: 1
+            maximum: 10000
+          surfaceCarrez:
+            type: number
+            format: double
+            minimum: 1
+            maximum: 10000
+          areas:
+            type: array
+            maxItems: 100
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - BATHROOM
+                    - SHOWER_ROOM
+                    - BEDROOM
+                    - LUNCHROOM
+                    - LIVING_ROOM
+                    - CELLAR
+                    - KITCHEN
+                    - TOILET
+                    - BALCONY
+                    - GARDEN
+                    - PARKING
+                    - SWIMMING_POOL
+                    - TERRACE
+                    - OTHER
+                surface:
+                  type: number
+                  format: double
+                kitchenType:
+                  type: string
+                  enum:
+                    - OPENED
+                    - CLOSED
+                    - KITCHENETTE
+                kitchenEquipments:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - FITTED
+                      - EQUIPPED
+                      - NONE
+          roomCount:
+            type: integer
+            minimum: 1
+            maximum: 100
+          floors:
+            type: array
+            maxItems: 100
+            items:
+              type: object
+              properties:
+                level:
+                  type: integer
+                  minimum: -10
+                  maximum: 100
+                surface:
+                  type: number
+                  format: double
+                  minimum: 1
+                  maximum: 10000
+                basementType:
+                  type: string
+                  enum:
+                    - PARTIAL
+                    - FULL
+      construction:
+        type: object
+        properties:
+          year:
+            type: integer
+            minimum: 1500
+            maximum: 2500
+          urbanismRules:
+            type: array
+            items:
+              type: string
+              enum:
+                - SEISMIC_ZONE
+                - TECHNOLOGICAL_ZONE
+                - FLOOD_ZONE
+                - CLASSIFIED_ZONE
+                - NOISE_ZONE
+                - PROTECTED_NATURAL_ZONE
+                - LANDSLIDE_ZONE
+      energy:
+        type: object
+        properties:
+          heatingTypes:
+            type: array
+            items:
+              type: string
+              enum:
+                - ELECTRIC
+                - GAS
+                - FUEL
+                - WOOD
+                - SOLAR
+                - HEAT_PUMP
+                - UNDERFLOOR
+                - NONE
+                - OTHER
+          heatingMode:
+            type: string
+            enum:
+              - INDIVIDUAL
+              - COLLECTIVE
+              - MIXED
+          waterHeatingTypes:
+            type: array
+            items:
+              type: string
+              enum:
+                - ELECTRIC
+                - GAS
+                - FUEL
+                - WOOD
+                - SOLAR
+                - HEAT_PUMP
+                - UNDERFLOOR
+                - NONE
+                - OTHER
+          waterHeatingMode:
+            type: string
+            enum:
+              - INDIVIDUAL
+              - COLLECTIVE
+              - MIXED
+          consumption:
+            type: integer
+            minimum: 0
+            maximum: 10000
+          greenHouseGasConsumption:
+            type: integer
+            minimum: 0
+            maximum: 10000
+      condominium:
+        type: object
+        properties:
+          lotCount:
+            type: integer
+            minimum: 1
+            maximum: 10000
+          expenses:
+            type: number
+            format: double
+            minimum: 1
+            maximum: 10000
+          isInDifficulty:
+            type: boolean
+      additionalFeatures:
+        type: array
+        maxItems: 100
+        items:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - HOUSE
+                - APARTMENT
+                - PREMISES
+                - LAND
+                - BUILDING
+                - PARKING
+            features:
+              $ref: '#/definitions/Property.Features'
+  Ad:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      url:
+        type: string
+      crawlSource:
+        $ref: '#/definitions/CrawlSource'
+      lastCrawlDate:
+        type: string
+        format: date-time
+      property:
+        $ref: '#/definitions/Property'
+  MarketingType:
+    type: string
+    enum:
+        - SALE
+        - RENT
+        - LIFE_ANNUITY
+  PropertyType:
+    type: string
+    enum:
+      - APARTMENT
+      - LOFT
+      - DUPLEX
+      - TRIPLEX
+      - HOUSE
+      - MANSION
+      - CHALET
+      - CASTLE
+      - HOMESTEAD
+  CrawlSource:
+    type: string
+    enum:
+      - EXPLORIMMO
+      - LE_BON_COIN
+      - LOGIC_IMMO
+      - OUEST_FRANCE_IMMO
+      - ANNONCES_JAUNES
+      - PARU_VENDU
+      - SE_LOGER
+      - TOP_ANNONCES
+      - PAP
+      - IMMONOT
+      - BELLES_DEMEURES
+      - PROPRIETES_DE_FRANCE
+      - LUX_RESIDENCE
+      - BIEN_ICI
+      - A_VENDRE_A_LOUER
+  City:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      inseeCode:
+        type: string
+      deptCode:
+        type: string
+      deptName:
+        type: string
+      zipCodes:
+        type: array
+        items:
+          type: string
+      localities:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      usageName:
+        type: string
+      regionName:
+        type: string
+      population:
+        type: number
+        format: double
+      centroid:
+        $ref: '#/definitions/Location'
+      geometry:
+        type: object
+        format: GeoJsonObject
+  Location:
+    type: object
+    properties:
+      lat:
+        type: number
+        format: double
+      lon:
+        type: number
+        format: double
+  Marketing.Dealer:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      organizationId:
+        type: integer
+        format: int64
+      type:
+        $ref: '#/definitions/Dealer.Type'
+      subType:
+        $ref: '#/definitions/Dealer.SubType'
+      name:
+        type: string
+        minLength: 1
+        maxLength: 300
+      phoneNumber:
+        type: string
+      email:
+        type: string
+  Dealer.Type:
+    type: string
+    enum:
+      - AGENCY
+      - PRIVATE
+      - MANDATARY
+  Dealer.SubType:
+    type: string
+    enum:
+      - REAL_ESTATE
+      - NOTARY
+      - REALTY_DEVELOPER
+  BoundType:
+    type: string
+    enum:
+      - OPEN
+      - CLOSED
+  Range:
+    type: object
+    properties:
+      lowerEndpoint:
+        type: integer
+      lowerBoundType:
+        $ref: '#/definitions/BoundType'
+      upperEndpoint:
+        type: integer
+      upperBoundType:
+        $ref: '#/definitions/BoundType'
+  EventType:
+    type: string
+    enum:
+      - PRICE
+      - EXCLUSIVE_MANDATE
+  Address:
+    type: object
+    properties:
+      cityId:
+        type: number
+        format: int64
+        minimum: 1
+      streetNumber:
+        type: string
+      street:
+        type: string
+      zipCode:
+        type: string
+      deptCode:
+        type: string
+      country:
+        type: string
+      location:
+        $ref: '#/definitions/Location'
+      approximateLocation:
+        type: object
+        format: GeoJsonObject
+  IrisQuarter:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      code:
+        type: integer
+      cityInseeCode:
+        type: string
+      cityName:
+        type: string
+      geometry:
+        type: object
+        format: GeoJsonObject
+  RentControlStatus:
+    type: string
+    enum:
+      - NOT_LOCATED
+      - QUARTER_NOT_FOUND
+      - QUARTER_CONFLICT
+      - ZONE_NOT_FOUND
+      - NO_PRICE
+      - NO_CONSTRUCTION_PERIOD
+      - CONSTRUCTION_PERIOD_CONFLICT
+      - VALID
+      - UNDER_MIN_PRICE_M2
+      - OVER_MAX_PRICE_M2
+  RentControlZone:
+    type: object
+    properties:
+      id:
+        type: integer
+      observatoryId:
+        type: integer
+      irisQuarterIds:
+        type: array
+        items:
+          type: string
+      roomCountCategory:
+        $ref: '#/definitions/Range'
+      constructionPeriod:
+        $ref: '#/definitions/Range'
+      furnished:
+        type: boolean
+      median:
+        type: number
+        format: double
+  Building:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      area:
+       type: number
+       format: double
+      constructionPeriod:
+        $ref: '#/definitions/Range'
+  DateHistogram:
+    type: object
+    properties:
+      points:
+        type: array
+        items:
+          $ref: '#/definitions/DateHistogramPoint'
+  DateHistogramPoint:
+    type: object
+    properties:
+      x:
+        type: string
+        format: date
+      y:
+        $ref: '#/definitions/Percentiles'
+  StockEvolution:
+    type: array
+    items:
+      $ref: '#/definitions/StockEvolutionPoint'
+  StockEvolutionPoint:
+    type: object
+    properties:
+      x:
+        type: string
+        format: date
+      y:
+        type: integer
+        format: int64
+  Histogram:
+    type: object
+    properties:
+      points:
+        type: array
+        items:
+          $ref: '#/definitions/HistogramPoint'
+  HistogramPoint:
+    type: object
+    properties:
+      x:
+        type: string
+      y:
+        $ref: '#/definitions/Percentiles'
+  Percentiles:
+    type: object
+    properties:
+      count:
+        type: integer
+        format: int64
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/PercentilesValues'
+  PercentilesValues:
+    type: object
+  Stats:
+    type: object
+    properties:
+      count:
+        type: integer
+        format: int64
+        minimum: 0
+      min:
+        type: number
+        format: double
+      max:
+        type: number
+        format: double
+      avg:
+        type: number
+        format: double
+      sum:
+        type: number
+        format: double
+        minimum: 0
+  SearchQueryParam:
+    type: object
+    properties:
+      from:
+        type: integer
+        default: 0
+        minimum: 0
+      size:
+        type: integer
+        default: 20
+        maximum: 1000
+      sort:
+        type: string
+      includes:
+        type: array
+        items:
+          type: string
+      excludes:
+        type: array
+        items:
+          type: string
+  PropertySearchQuery:
+    type: object
+    properties:
+      searchQueryParam:
+        $ref: '#/definitions/SearchQueryParam'
+      queryString:
+        type: string
+      marketingTypes:
+        type: array
+        items:
+          $ref: '#/definitions/MarketingType'
+      crawlSources:
+        type: array
+        items:
+          $ref: '#/definitions/CrawlSource'
+      active:
+        type: boolean
+      dealerTypes:
+        type: array
+        items:
+          $ref: '#/definitions/Dealer.Type'
+      dealerNames:
+        type: array
+        items:
+          type: string
+      exclusiveMandate:
+        type: boolean
+      dealerIds:
+        type: integer
+        format: int64
+      excludedDealerIds:
+        type: array
+        items:
+          type: integer
+          format: int64
+      propertyIds:
+        type: array
+        items:
+          type: string
+      propertyTypes:
+        type: array
+        items:
+          $ref: '#/definitions/PropertyType'
+      roomCounts:
+        type: array
+        items:
+          type: integer
+      departments:
+        type: array
+        items:
+          type: string
+      zipCodes:
+        type: array
+        items:
+          type: string
+      cityIds:
+        type: array
+        items:
+          type: integer
+          format: int64
+      publicationDateMin:
+        type: string
+        format: date-time
+      publicationDateMax:
+        type: string
+        format: date-time
+      adPublicationDateMin:
+        type: string
+        format: date-time
+      adPublicationDateMax:
+        type: string
+        format: date-time
+      lastPriceDecreaseDateMin:
+        type: string
+        format: date-time
+      lastPriceDecreaseDateMax:
+        type: string
+        format: date-time
+      deleteDateMin:
+        type: string
+        format: date-time
+      deleteDateMax:
+        type: string
+        format: date-time
+      durationDaysMin:
+        type: integer
+      durationDaysMax:
+        type: integer
+      surfaceMin:
+        type: number
+        format: double
+      surfaceMax:
+        type: number
+        format: double
+      priceMin:
+        type: number
+        format: double
+      priceMax:
+        type: number
+        format: double
+      priceM2Min:
+        type: number
+        format: double
+      priceM2Max:
+        type: number
+        format: double
+      priceHCMin:
+        type: number
+        format: double
+      priceHCMax:
+        type: number
+        format: double
+      priceM2HCMin:
+        type: number
+        format: double
+      priceM2HCMax:
+        type: number
+        format: double
+      priceCCMin:
+        type: number
+        format: double
+      priceCCMax:
+        type: number
+        format: double
+      feesMin:
+        type: number
+        format: double
+      feesMax:
+        type: number
+        format: double
+      depositMin:
+        type: number
+        format: double
+      depositMax:
+        type: number
+        format: double
+      furnished:
+        type: boolean
+      newBuild:
+        type: boolean
+      missingFields:
+        type: array
+        items:
+          type: string
+      excludedIds:
+        type: array
+        items:
+          type: string
+  User:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      organizationId:
+        type: integer
+        format: int64
+      title:
+        type: string
+        enum:
+          - MR
+          - MRS
+      username:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      email:
+        type: string
+      mobilePhoneNumber:
+        type: string
+      officePhoneNuber:
+        type: string
+      avatarUrl:
+        type: string
+      agencies:
+        type: array
+        items:
+          type: integer
+          format: int64
+      mandataryNetworkId:
+        type: integer
+        format: int64
+      capsuleId:
+        type: string
+      creationDate:
+        type: string
+        format: 'date-time'
+      active:
+        type: boolean
+      admin:
+        type: boolean
+      firstConnection:
+        type: boolean
+      userPreference:
+        type: object
+        properties:
+          commercialZone:
+            type: object
+            properties:
+              cities:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+              zipCodes:
+                type: array
+                items:
+                  type: string
+              departments:
+                type: array
+                items:
+                  type: string
+          marketingType:
+            type: string
+            enum:
+              - SALE
+              - RENT
+              - LIFE_ANNUITY
+              - NEW_BUILD
+      hosts:
+        type: array
+        items:
+          type: string
+  Agency:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      externalId:
+        type: string
+      organizationId:
+        type: integer
+        format: int64
+      name:
+        type: string
+      usageName:
+        type: string
+      siren:
+        type: string
+      siret:
+        type: string
+      nafCode:
+        type: object
+        properties:
+          id:
+            type: string
+          label:
+            type: string
+      cityRefId:
+        type: integer
+        format: int64
+      address:
+        $ref: '#/definitions/Address'
+      description:
+        type: string
+      phone:
+        type: string
+      email:
+        type: string
+      url:
+        type: string
+      imageUrl:
+        type: string
+      active:
+        type: boolean
+      createdAt:
+        type: string
+        format: 'date-time'
+      updatedAt:
+        type: string
+        format: 'date-time'
+      salePropertyCount:
+        type: integer
+      rentPropertyCount:
+        type: integer
+  MandataryNetwork:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+      description:
+        type: string
+      siren:
+        type: string
+      siret:
+        type: string
+      address:
+        $ref: '#/definitions/Address'
+      phone:
+        type: string
+      email:
+        type: string
+      url:
+        type: string
+      imageUrl:
+        type: string
+      active:
+        type: boolean
+  Study:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      userId:
+        type: integer
+        format: int64
+      externalUserId:
+        type: string
+      agencyId:
+        type: integer
+        format: int64
+      externalAgencyId:
+        type: string
+      organizationId:
+        type: integer
+        format: int64
+      name:
+        type: string
+      customer:
+        $ref: '#/definitions/Customer'
+      property:
+        $ref: '#/definitions/Property'
+      sections:
+        $ref: '#/definitions/Sections'
+  Sections:
+    type: object
+    properties:
+      estimationEngine:
+        type: object
+        properties:
+          estimatedPrice:
+            type: number
+            format: double
+          estimatedPriceM2:
+            type: number
+            format: double
+          estimatedPriceRange:
+            $ref: '#/definitions/Range'
+          zones:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - DISTRICT
+                    - CITY
+                    - DEPARTMENT
+                    - REGION
+                    - UNKNOWN
+                name:
+                  type: string
+                priceM2Percentiles:
+                  $ref: '#/definitions/Percentiles'
+                priceM2Distribution:
+                  $ref: '#/definitions/DateHistogram'
+                boundingBoxes:
+                  type: array
+                  items:
+                    $ref: '#/definitions/LngLat'
+      marketStats:
+        type: object
+        properties:
+          propertySearchQuery:
+            $ref: '#/definitions/PropertySearchQuery'
+          pricePercentiles:
+            $ref: '#/definitions/Percentiles'
+          priceM2Percentiles:
+            $ref: '#/definitions/Percentiles'
+          durationPercentiles:
+            $ref: '#/definitions/Percentiles'
+          priceM2Distribution:
+            $ref: '#/definitions/Histogram'
+          durationDistribution:
+            $ref: '#/definitions/Histogram'
+          priceM2Evolution:
+            $ref: '#/definitions/DateHistogram'
+          durationEvolution:
+            $ref: '#/definitions/DateHistogram'
+      similarProperties:
+        type: object
+        properties:
+          properties:
+            type: array
+            items:
+              $ref: '#/definitions/Property'
+      propertyPriceStudy:
+        type: object
+        properties:
+          priceComment:
+            type: string
+          similarPropertiesComment:
+            type: string
+          similarProperties:
+            type: array
+            items:
+              $ref: '#/definitions/Property'
+          showMarketPrice:
+            type: boolean
+          estimatedPrice:
+            type: number
+            format: double
+          activeSerie:
+            type: boolean
+          expiredSerie:
+            type: boolean
+      conclusion:
+        type: object
+        properties:
+          conclusion:
+            type: string
+          showPrice:
+            type: boolean
+          showFees:
+             type: boolean
+          showPriceWithFees:
+             type: boolean
+  Customer:
+    type: object
+    properties:
+      name:
+        type: string
+      address:
+        $ref: '#/definitions/Address'
+      mail:
+        type: string
+      phone:
+        type: string
+  Property.Marketing:
+    type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - SALE
+          - RENT
+          - NEW_BUILD
+      price:
+        type: number
+        format: double
+      sellingPrice:
+        type: number
+        format: double
+      priceEvents:
+        type: array
+        items:
+          $ref: '#/definitions/PriceEvent'
+      dealers:
+        type: array
+        items:
+          $ref: '#/definitions/Marketing.Dealer'
+      marketingStartDate:
+        type: string
+        format: 'date-time'
+      marketingEndDate:
+        type: string
+        format: 'date-time'
+      publicationStartDate:
+        type: string
+        format: 'date-time'
+      publicationEndDate:
+        type: string
+        format: 'date-time'
+      rentalExpenses:
+        type: number
+        format: double
+      rentalExpensesIncluded:
+        type: boolean
+      deposit:
+        type: number
+        format: double
+      propertyTax:
+        type: number
+        format: double
+      fees:
+        type: number
+        format: double
+      feesIncluded:
+        type: boolean
+      exclusiveMandate:
+        type: boolean
+      occupied:
+        type: boolean
+      rentControl:
+        $ref: '#/definitions/RentControl'
+  AdRef:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      crawlSource:
+        $ref: '#/definitions/CrawlSource'
+      url:
+        type: string
+  Room:
+    type: object
+    properties:
+      roomType:
+        type: string
+        maxLength: 200
+      surface:
+        type: integer
+        maximum: 1000
+        minimum: 0
+      wallCovering:
+        type: string
+        maxLength: 200
+      floorCovering:
+        type: string
+        maxLength: 200
+      generalState:
+        $ref: '#/definitions/State'
+  LngLat:
+    type: object
+    properties:
+      longitude:
+        type: number
+        format: double
+      latitude:
+        type: number
+        format: double
+  RentControl:
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/RentControlStatus'
+      irisQuarterName:
+        type: string
+      irisQuartedId:
+        type: string
+      min:
+        type: number
+        format: double
+      max:
+        type: number
+        format: double
+  State:
+    type: string
+    enum:
+      - NEW
+      - VERY_GOOD
+      - GOOD
+      - BAD
+      - VERY_BAD
+  PropertyBuilding:
+    type: object
+    properties:
+      type:
+        type: string
+        maxLength: 200
+      floorCount:
+        type: integer
+        minimum: 0
+        maximum: 100
+      constructionYear:
+        type: integer
+        minimum: 1000
+        maximum: 3000
+      constructionMaterials:
+        type: string
+        maxLength: 1000
+      generalState:
+        $ref: '#/definitions/State'
+      commonAreaState:
+        $ref: '#/definitions/State'
+      facadeState:
+        $ref: '#/definitions/State'
+      elevator:
+        type: boolean
+      caretaker:
+        type: boolean
+      digicode:
+        type: boolean
+      intercom:
+        type: boolean
+      adsl:
+        type: boolean
+      cable:
+        type: boolean
+      fiber:
+        type: boolean
+      disableAccess:
+        type: boolean
+  PriceEvent:
+    type: object
+    properties:
+      price:
+        type: number
+        format: double
+      date:
+        type: string
+        format: 'date-time'
+parameters:
+  SearchQueryParam.from:
+    name: from
+    in: query
+    description: Début de la pagination
+    type: integer
+    minimum: 0
+    default: 0
+  SearchQueryParam.size:
+    name: size
+    in: query
+    description: Nombre de résultats
+    type: integer
+    minimum: 0
+    maximum: 1000
+    default: 20
+  SearchQueryParam.sort:
+    name: sort
+    in: query
+    description: Trier par
+    type: string
+  SearchQueryParam.includes:
+    name: includes
+    in: query
+    description: Inclure un ou plusieurs élements par identifiant
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+  SearchQueryParam.excludes:
+    name: excludes
+    in: query
+    description: Exclure un ou plusieurs élements par identifiant
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+  q:
+    name: q
+    in: query
+    description: Recherche plein-texte
+    type: string
+  marketingTypes:
+    name: marketingTypes
+    in: query
+    description: Types de marché (vente, location, vente en viager)
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+      enum:
+          - SALE
+          - RENT
+          - LIFE_ANNUITY
+  crawlSources:
+      name: crawlSources
+      in: query
+      description: Portails immobiliers
+      type: array
+      collectionFormat: multi
+      items:
+        type: string
+        enum:
+          - EXPLORIMMO
+          - LE_BON_COIN
+          - LOGIC_IMMO
+          - OUEST_FRANCE_IMMO
+          - ANNONCES_JAUNES
+          - PARU_VENDU
+          - SE_LOGER
+          - TOP_ANNONCES
+          - PAP
+          - IMMONOT
+          - BELLES_DEMEURES
+          - PROPRIETES_DE_FRANCE
+          - LUX_RESIDENCE
+          - BIEN_ICI
+          - A_VENDRE_A_LOUER
+  active:
+    name: active
+    in: query
+    description: Statut de l'annonce (expirée ou pas)
+    type: boolean
+  published:
+    name: published
+    in: query
+    description: Le bien est-il annoncé en ligne ou pas
+    type: boolean
+  dealerTypes:
+    name: dealerTypes
+    in: query
+    description: Types de vendeur (agence, mandataire..)
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+      enum:
+        - AGENCY
+        - PRIVATE
+        - SOLICITOR
+        - MANDATARY
+        - REALTY_DEVELOPER
+        - PUBLIC_HOUSING
+        - DIRECT_SALE
+        - OTHER
+  dealerNames:
+    name: dealerNames
+    in: query
+    description: Liste de noms de vendeurs
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+  exclusiveMandate:
+    name: exclusiveMandate
+    in: query
+    description: Mandat Exclusif
+    type: boolean
+  dealerIds:
+    name: dealerIds
+    in: query
+    description: Liste d'identifiants de vendeurs
+    type: array
+    collectionFormat: multi
+    items:
+      type: integer
+      format: int64
+  excludedDealerIds:
+    name: excludedDealerIds
+    in: query
+    description:  Liste d'identifiants de vendeurs à exclure
+    type: array
+    collectionFormat: multi
+    items:
+      type: integer
+      format: int64
+  propertyIds:
+    name: propertyIds
+    in: query
+    description:  Liste d'identifiants de biens
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+  propertyTypes:
+    name: propertyTypes
+    in: query
+    description: Types de bien
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+      enum:
+        - APARTMENT
+        - LOFT
+        - DUPLEX
+        - TRIPLEX
+        - HOUSE
+        - MANSION
+        - CHALET
+        - CASTLE
+        - HOMESTEAD
+  roomCounts:
+    name: roomCounts
+    in: query
+    description: Nombre de pièces
+    type: array
+    collectionFormat: multi
+    items:
+      type: integer
+  departments:
+    name: departments
+    in: query
+    description: Liste de départements
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+  zipCodes:
+    name: zipCodes
+    in: query
+    description: Liste de codes postaux
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+  cityIds:
+    name: cityIds
+    in: query
+    description: Liste d'identifiants de villes
+    type: array
+    collectionFormat: multi
+    items:
+      type: integer
+      format: int64
+  publicationDateMin:
+    name: publicationDateMin
+    in: query
+    description: Date minimale de publication (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: 'date-time'
+  publicationDateMax:
+    name: publicationDateMax
+    in: query
+    description: Date limite de publication (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: 'date-time'
+  adPublicationDateMin:
+    name: adPublicationDateMin
+    in: query
+    description: Date minimale de publication de l'annonce (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: 'date-time'
+  adPublicationDateMax:
+    name: adPublicationDateMax
+    in: query
+    description: Date limite de publication de l'annonce (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: 'date-time'
+  lastPriceDecreaseDateMin:
+    name: lastPriceDecreaseDateMin
+    in: query
+    description: Date minimale de la dernière baisse de prix (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: 'date-time'
+  lastPriceDecreaseDateMax:
+    name: lastPriceDecreaseDateMax
+    in: query
+    description: Date limite de la dernière baisse de prix (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: 'date-time'
+  deleteDateMin:
+    name: deleteDateMin
+    in: query
+    description: Date minimale de suppression (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: 'date-time'
+  deleteDateMax:
+    name: deleteDateMax
+    in: query
+    description: Date limite de suppression (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: 'date-time'
+  durationDaysMin:
+    name: durationDaysMin
+    in: query
+    description: Durée minimale en jours
+    type: integer
+  durationDaysMax:
+    name: durationDaysMax
+    in: query
+    description: Durée maximale en jours
+    type: integer
+  surfaceMin:
+    name: surfaceMin
+    in: query
+    description: Surface minimale
+    type: integer
+    format: double
+  surfaceMax:
+    name: surfaceMax
+    in: query
+    description: Surface maximale
+    type: integer
+    format: double
+  priceMin:
+    name: priceMin
+    in: query
+    description: Prix minimum
+    type: integer
+    format: double
+  priceMax:
+    name: priceMax
+    in: query
+    description: Prix maximum
+    type: integer
+    format: double
+  priceM2Min:
+    name: priceM2Min
+    in: query
+    description: Prix au mètre carré minimum
+    type: integer
+    format: double
+  priceM2Max:
+    name: priceM2Max
+    in: query
+    description: Prix au mètre carré maximum
+    type: integer
+    format: double
+  priceHCMin:
+    name: priceHCMin
+    in: query
+    description: Prix hors charges minimum
+    type: integer
+    format: double
+  priceHCMax:
+    name: priceHCMax
+    in: query
+    description: Prix hors charges maximum
+    type: integer
+    format: double
+  priceM2HCMin:
+    name: priceM2HCMin
+    in: query
+    description: Prix au mètres carré hors charges minimum
+    type: integer
+    format: double
+  priceM2HCMax:
+     name: priceM2HCMax
+     in: query
+     description: Prix au mètres carré hors charges maximum
+     type: integer
+     format: double
+  priceCCMin:
+    name: priceCCMin
+    in: query
+    description: Prix charges comprises minimum
+    type: integer
+    format: double
+  priceCCMax:
+    name: priceCCMax
+    in: query
+    description: Prix charges comprises maximum
+    type: integer
+    format: double
+  feesMin:
+    name: feesMin
+    in: query
+    description: Honoraires minimales
+    type: integer
+    format: double
+  feesMax:
+    name: feesMax
+    in: query
+    description: Honoraires maximales
+    type: integer
+    format: double
+  depositMin:
+    name: depositMin
+    in: query
+    description: Caution minimale
+    type: integer
+    format: double
+  depositMax:
+    name: depositMax
+    in: query
+    description: Caution maximale
+    type: integer
+    format: double
+  furnished:
+    name: furnished
+    in: query
+    description: Meublé
+    type: boolean
+  newBuild:
+    name: newBuild
+    in: query
+    description: Nouvelle construction
+    type: boolean
+  missingFields:
+    name: missingFields
+    in: query
+    description: Attributs manquants
+    type: array
+    items:
+      type: string
+  existingFields:
+    name: existingFields
+    in: query
+    description: Attributs existants
+    type: array
+    items:
+      type: string
+  excludedIds:
+    name: excludedIds
+    in: query
+    description: Identifiants à exclure
+    type: array
+    items:
+      type: string
+  externalIds:
+    name: externalIds
+    in: query
+    description: Identifiants externes
+    type: array
+    items:
+      type: string
+  organizationIds:
+    name: organizationIds
+    in: query
+    description: Identifiants d'organisations
+    type: array
+    items:
+      type: string
+  PropertyGroupByCountQuery.groupBy:
+    name: groupBy
+    in: path
+    description: Grouper par
+    type: string
+    required: true
+    enum:
+      - CRAWL_SOURCES
+      - CITY_ID
+      - CITY_DEPT_CODE
+      - DEALERS_TYPE
+      - DEALERS_ID
+      - MARKETING_TYPE
+      - PROPERTY_TYPE
+      - SURFACE
+      - ROOM_COUNT
+  PropertySubGroupByCountQuery.subGroupBy:
+    name: subGroupBy
+    in: path
+    description: Grouper par
+    type: string
+    required: true
+    enum:
+      - CRAWL_SOURCES
+      - CITY_ID
+      - CITY_DEPT_CODE
+      - DEALERS_TYPE
+      - DEALERS_ID
+      - MARKETING_TYPE
+      - PROPERTY_TYPE
+      - SURFACE
+      - ROOM_COUNT
+  PropertyHistogramQuery.field:
+    name: field
+    in: query
+    description: Champ sur lequel sont calculés les statistiques
+    type: string
+    required: true
+    enum:
+      - PRICE
+      - PRICE_HC
+      - PRICE_CC
+      - PRICE_M2
+      - PRICE_M2_HC
+      - PRICE_M2_CC
+      - SURFACE
+      - ROOM_COUNT
+      - DURATION_DAYS
+  PropertyHistogramQuery.intervalField:
+    name: intervalField
+    in: query
+    description: Champ sur lequel sont calculés les statistiques
+    type: string
+    required: true
+    enum:
+      - PRICE
+      - PRICE_HC
+      - PRICE_CC
+      - PRICE_M2
+      - PRICE_M2_HC
+      - PRICE_M2_CC
+      - SURFACE
+      - ROOM_COUNT
+      - DURATION_DAYS
+  PropertyDateHistogramQuery.field:
+    name: field
+    in: query
+    description: Champ sur lequel sont calculés les statistiques
+    type: string
+    required: true
+    enum:
+      - PRICE
+      - PRICE_HC
+      - PRICE_CC
+      - PRICE_M2
+      - PRICE_M2_HC
+      - PRICE_M2_CC
+      - SURFACE
+      - ROOM_COUNT
+      - DURATION_DAYS
+  PropertyDateHistogramQuery.intervalField:
+    name: intervalField
+    in: query
+    description: Champ sur lequel sont calculés les statistiques
+    type: string
+    required: true
+    enum:
+      - PUBLICATION_DATE
+      - DELETE_DATE
+  PropertyPercentileQuery.field:
+    name: field
+    in: query
+    description: Champ sur lequel sont calculés les statistiques
+    type: string
+    required: true
+    enum:
+      - PRICE
+      - PRICE_HC
+      - PRICE_CC
+      - PRICE_M2
+      - PRICE_M2_HC
+      - PRICE_M2_CC
+      - SURFACE
+      - ROOM_COUNT
+      - DURATION_DAYS
+  PropertyGroupByPercentileQuery.groupBy:
+    name: groupBy
+    in: path
+    description: Grouper par
+    type: string
+    required: true
+    enum:
+      - CRAWL_SOURCES
+      - CITY_ID
+      - CITY_DEPT_CODE
+      - DEALERS_TYPE
+      - DEALERS_ID
+      - MARKETING_TYPE
+      - PROPERTY_TYPE
+      - SURFACE
+      - ROOM_COUNT
+  PropertyStatsQuery.field:
+    name: field
+    in: query
+    description: Champ sur lequel sont calculés les statistiques
+    type: string
+    required: true
+    enum:
+      - PRICE
+      - PRICE_HC
+      - PRICE_CC
+      - PRICE_M2
+      - PRICE_M2_HC
+      - PRICE_M2_CC
+      - SURFACE
+      - ROOM_COUNT
+      - DURATION_DAYS
+  PropertyGroupByStatsQuery.groupBy:
+    name: groupBy
+    in: path
+    description: Grouper par
+    type: string
+    required: true
+    enum:
+      - CRAWL_SOURCES
+      - CITY_ID
+      - CITY_DEPT_CODE
+      - DEALERS_TYPE
+      - DEALERS_ID
+      - MARKETING_TYPE
+      - PROPERTY_TYPE
+      - SURFACE
+      - ROOM_COUNT
+  PropertySubGroupByStatsQuery.subGroupBy:
+    name: subGroupBy
+    in: path
+    description: Grouper par
+    type: string
+    required: true
+    enum:
+      - CRAWL_SOURCES
+      - CITY_ID
+      - CITY_DEPT_CODE
+      - DEALERS_TYPE
+      - DEALERS_ID
+      - MARKETING_TYPE
+      - PROPERTY_TYPE
+      - SURFACE
+      - ROOM_COUNT
+  SimilarPropertyPercentileQuery.field:
+    name: field
+    in: query
+    description: Champ sur lequel sont calculés les statistiques
+    type: string
+    required: true
+    enum:
+      - PRICE
+      - PRICE_HC
+      - PRICE_CC
+      - PRICE_M2
+      - PRICE_M2_HC
+      - PRICE_M2_CC
+      - SURFACE
+      - ROOM_COUNT
+      - DURATION_DAYS
+  PropertyGroupByCountQuery.termsSize:
+    name: termsSize
+    in: query
+    description: Précision des résultats
+    type: integer
+    required: true
+    minimum: 10
+    maximum: 100
+    default: 30
+  percentiles:
+    name: percentiles
+    in: query
+    description: "Les percentiles (ex: 10.0, 50.0, 90.0)"
+    type: array
+    collectionFormat: multi
+    required: true
+    items:
+      type: number
+      format: double
+  PropertyHistogramQuery.interval:
+    name: interval
+    in: query
+    description: Valeur de l'intervalle de l'histogramme
+    type: integer
+    format: int64
+    minimum: 1
+    default: 1
+  PropertyHistogramQuery.extendedBoundMin:
+    name: extendedBoundMin
+    in: query
+    description: Garantit un intervalle minimale
+    type: integer
+    format: int64
+  PropertyHistogramQuery.extendedBoundMax:
+      name: extendedBoundMax
+      in: query
+      description: Garantit un intervalle maximale
+      type: integer
+      format: int64
+  PropertyDateHistogramQuery.intervalUnit:
+    name: intervalUnit
+    in: query
+    description: Unité de temps de l'intervalle
+    type: string
+    default: MONTHS
+    enum:
+      - DAYS
+      - WEEKS
+      - MONTHS
+      - YEARS
+  GeoSearchQuery.lat:
+    name: lat
+    in: query
+    description: Latitude
+    type: number
+    format: double
+  GeoSearchQuery.lng:
+    name: lng
+    in: query
+    description: Longitude
+    type: number
+    format: double
+  GeoSearchQuery.radius:
+    name: radius
+    in: query
+    description: Radius
+    type: string
+    default: '10m'
+  minDocCount:
+    name: minDocCount
+    in: query
+    description: Le nombre minimum de documents a matcher
+    type: integer
+    minimum: 0
+    maximum: 100
+    default: 10
+  price:
+    name: price
+    in: query
+    description: Prix
+    type: number
+    format: double
+  surface:
+    name: surface
+    in: query
+    description: Surface
+    type: number
+    format: double
+  SimilarPropertyQuery.active:
+    name: active
+    in: query
+    description: En cours de publication
+    type: boolean
+    default: true
+  SimilarPropertyQuery.roomCount:
+    name: roomCount
+    in: query
+    description: Nombre de pièces
+    type: integer
+  AdboxEventSearchQuery.userIds:
+    name: userIds
+    in: query
+    description: Liste d'identifiants d'utilisateurs
+    type: array
+    collectionFormat: multi
+    items:
+      type: integer
+      format: int64
+  AdboxEventSearchQuery.status:
+    name: status
+    in: query
+    description: Liste de statuts d'évènements
+    type: string
+    enum:
+      - TODO
+      - RECALL
+      - DONE
+  AdboxEventSearchQuery.eventTypes:
+    name: eventTypes
+    in: query
+    description: Liste de types d'évènements
+    type: string
+    enum:
+      - CREATE
+      - PRICE_DECREASE
+      - MANUAL
+  AdboxEventSearchQuery.tags:
+    name: tags
+    in: query
+    description: Identifiants (UUID) de tags
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+      format: uuid
+  AdboxEventSearchQuery.propertyIds:
+    name: propertyIds
+    in: query
+    description: Identifiants de biens
+    type: array
+    collectionFormat: multi
+    items:
+      type: string
+      format: uuid
+  AdboxEventSearchQuery.eventTimeMin:
+    name: eventTimeMin
+    in: query
+    description: Date minimal de la création de l'évènement (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: date-time
+  AdboxEventSearchQuery.eventTimeMax:
+    name: eventTimeMax
+    in: query
+    description: Date maximal de la création de l'évènement (YYYY-mm-ddTHH:mm:ss)
+    type: string
+    format: date-time
+  AdboxEventGroupByCountQuery.groupBy:
+    name: groupBy
+    in: path
+    description: Grouper par
+    type: string
+    required: true
+    enum:
+      - EVENT_TYPE
+      - TAGS
+      - STATUS
+  AdboxEventGroupByCountQuery.termsSize:
+    name: termsSize
+    in: query
+    description: Précision des résultats
+    type: integer
+    required: true
+    minimum: 10
+    maximum: 100
+    default: 30
+  AdboxEventSubGroupByCountQuery.subGroupBy:
+    name: subGroupBy
+    in: path
+    description: Grouper par
+    type: string
+    required: true
+    enum:
+      - EVENT_TYPE
+      - TAGS
+      - STATUS
+  HttpBlob.location:
+    name: location
+    in: query
+    required: true
+    description: Localisation de l'image
+    type: string
+  HttpBlob.fileName:
+    name: fileName
+    in: query
+    required: true
+    description: Nom du fichier
+    type: string
+  HttpBlob.mediaType:
+    name: mediaType
+    in: query
+    required: true
+    description: Type de l'image
+    type: string
+  HttpBlob.content:
+    name: content
+    in: query
+    required: true
+    description: L'image
+    type: string
+    format: byte
+  HttpBlob.md5:
+    name: md5
+    in: query
+    required: true
+    description: Somme md5 de l'image
+    type: string
+  HttpBlob.base64:
+    name: base64
+    in: query
+    required: true
+    description: L'image est-elle encodée en base 64
+    type: boolean
+  AgencySearchQuery.externalId:
+    name: externalId
+    in: query
+    description: Identifiant externe client
+    type: string
+  AgencySearchQuery.organizationId:
+    name: organizationId
+    in: query
+    description: Identifiant de l'organisation
+    type: integer
+    format: int64
+  AgencySearchQuery.siren:
+    name: siren
+    in: query
+    description: Siren de l'entreprise
+    type: array
+    items:
+      type: string
+  AgencySearchQuery.siret:
+    name: siret
+    in: query
+    description: Siret de l'entreprise
+    type: array
+    items:
+      type: string
+  AgencySearchQuery.cityIds:
+    name: cityIds
+    in: query
+    description: Liste d'identifiants de villes
+    type: array
+    items:
+      type: integer
+      format: int64
+  AgencySearchQuery.salePropertyCountMin:
+    name: salePropertyCountMin
+    description: Nombre minimal de biens en vente
+    in: query
+    type: integer
+    minimum: 0
+  AgencySearchQuery.salePropertyCountMax:
+    name: salePropertyCountMax
+    description: Nombre maximal de biens en vente
+    in: query
+    type: integer
+    minimum: 0
+  AgencySearchQuery.rentPropertyCountMin:
+    name: rentPropertyCountMin
+    description: Nombre minimal de biens en location
+    in: query
+    type: integer
+    minimum: 0
+  AgencySearchQuery.rentPropertyCountMax:
+    name: rentPropertyCountMax
+    description: Nombre maximal de biens en location
+    in: query
+    type: integer
+    minimum: 0
+  AgencySearchQuery.active:
+    name: active
+    description: Agence active
+    in: query
+    type: boolean
+  MandataryNetworkSearchQuery.siren:
+    name: siren
+    in: query
+    type: array
+    items:
+      type: string
+  StudySearchQuery.userIds:
+    name: userIds
+    in: query
+    description: Liste d'identifiants d'utilisateurs
+    type: array
+    items:
+      type: integer
+      format: int64
+  StudySearchQuery.externalUserIds:
+    name: externalUserIds
+    in: query
+    description: Liste d'identifiants externe client
+    type: array
+    items:
+      type: string
+  StudySearchQuery.agencyIds:
+    name: agencyIds
+    in: query
+    description: Liste d'identifiants d'agences
+    type: array
+    items:
+      type: integer
+      format: int64
+  StudySearchQuery.externalAgencyIds:
+    name: externalAgencyIds
+    in: query
+    description: Liste d'identifiants externes d'agences
+    type: array
+    items:
+      type: string
+  StudySearchQuery.organizationIds:
+    name: organizationIds
+    in: query
+    description: Liste d'identifiants d'organisations
+    type: array
+    items:
+      type: integer
+      format: int64
+  StudySearchQuery.marketingTypes:
+    name: marketingTypes
+    in: query
+    description: Liste de types de marché (vente, location, vente en viager)
+    type: array
+    items:
+      type: string
+      enum:
+        - SALE
+        - RENT
+        - NEW_BUILD
+  StudySearchQuery.propertyExternalIds:
+    name: propertyExternalIds
+    in: query
+    description: Liste d'identifiants externes de biens
+    type: array
+    items:
+      type: string
+  StudySearchQuery.creationDateMin:
+    name: creationDateMin
+    in: query
+    description: Date minimale de création de l'étude
+    type: string
+    format: 'date-time'
+  StudySearchQuery.creationDateMax:
+    name: creationDateMax
+    in: query
+    description: Date limite de création de l'étude
+    type: string
+    format: 'date-time'
