@@ -186,8 +186,8 @@ class PropertyBuilding(object):
         """
         if construction_year is not None and construction_year > 3000:
             raise ValueError("Invalid value for `construction_year`, must be a value less than or equal to `3000`")
-        if construction_year is not None and construction_year < 1000:
-            raise ValueError("Invalid value for `construction_year`, must be a value greater than or equal to `1000`")
+        if construction_year is not None and construction_year < 0:
+            raise ValueError("Invalid value for `construction_year`, must be a value greater than or equal to `0`")
 
         self._construction_year = construction_year
 
